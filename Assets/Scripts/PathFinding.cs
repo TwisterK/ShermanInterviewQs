@@ -10,20 +10,20 @@ public class PathFinding : MonoBehaviour
 	{
 		// Key in the example data in the first place
 		data = new Dictionary<string, List<Node>> ();
-        data.Add("A", Node.InitList("C,5;D,9"));
-        data.Add("B", Node.InitList("F,5;D,7"));
-        data.Add("C", Node.InitList("A,5;D,4;H,6;G,5.5;E,1"));
-        data.Add("D", Node.InitList("A,9;C,4;B,7"));
-        data.Add("E", Node.InitList("C,1;F,0.8"));
-        data.Add("F", Node.InitList("G,4;E,0.8;B,5"));
-        data.Add("G", Node.InitList("C,5.5;H,2;F,4"));
-        data.Add("H", Node.InitList("G,2;C,6"));
+		data.Add ("A", Node.InitList ("C,5;D,9"));
+		data.Add ("B", Node.InitList ("F,5;D,7"));
+		data.Add ("C", Node.InitList ("A,5;D,4;H,6;G,5.5;E,1"));
+		data.Add ("D", Node.InitList ("A,9;C,4;B,7"));
+		data.Add ("E", Node.InitList ("C,1;F,0.8"));
+		data.Add ("F", Node.InitList ("G,4;E,0.8;B,5"));
+		data.Add ("G", Node.InitList ("C,5.5;H,2;F,4"));
+		data.Add ("H", Node.InitList ("G,2;C,6"));
 	}
 
 	List<TravelingNode> tNodes = new List<TravelingNode> ();
 	List<string> traveledNodes = new List<string> ();
 
-	private void CreateTravelNode (string start)
+	private void CreateTravelNode (string start, string destination)
 	{
 		// Get start point connected nodes first
 		List<Node> nodes;
@@ -40,8 +40,12 @@ public class PathFinding : MonoBehaviour
 			
 			TravelingNode tNode = TravelingNode.Init (node.nodeName);
 			tNode.path = start + node.nodeName;
-			tNode.interation++;
+			tNode.interation = 1;
 			tNode.totalDistance += node.weight;
+			
+			if ( node.nodeName == destination  )
+				tNode.isDone = true;
+			
 			tNodes.Add (tNode);
 		}
 	}
@@ -49,15 +53,28 @@ public class PathFinding : MonoBehaviour
 	// A to B shortest path
 	private string GetShortestPath (string start, string destination)
 	{
-		CreateTravelNode (start);
+		// If user enter same start and destination, skip all the calculation
+		if( start == destination )
+		{
+			return "We're already there!";
+		}
+		
+		// Reset the nodes for new calculation
+		tNodes.Clear();
+		traveledNodes.Clear();
+		
+		CreateTravelNode (start, destination);
         
-		// Once it is done, travel using shortest path
+		// Once it is done, find current shortest path
 		TravelingNode sdNode = GetShortDistanceNode (tNodes);
+		
+		// Based on new data, calculate again from there.
 		return GetShortestPath (sdNode, destination);
 	}
 	
 	private string GetShortestPath (TravelingNode tNode, string destination)
 	{
+		// All travel nodes found the destinationa already, time to return the shortest path
 		if (tNode == null) {
 			return GetShortDistanceNode (tNodes, true).path;
 		}
@@ -70,14 +87,14 @@ public class PathFinding : MonoBehaviour
 		if (!traveledNodes.Contains (tNode.currentNode))
 			traveledNodes.Add (tNode.currentNode);
 		
-		// If inside there there is a distance data about this node, remove but remember to add in the weignt data
-		for (int i = 0; i < tNodes.Count; i++) {
-			if (tNodes [i] == tNode) {
-				tNodes [i] = null;
-			}
+		// Remove existing travel node since we will have a new one soon
+		if ( tNodes.Contains ( tNode ) )
+		{
+			tNodes.Remove ( tNode );
 		}
 		
 		foreach (Node node in nodes) {
+			// Avoid node that already visited.
 			if (traveledNodes.Contains (node.nodeName)) {
 				continue;
 			}
@@ -87,6 +104,7 @@ public class PathFinding : MonoBehaviour
 			newTNode.interation = tNode.interation + 1;
 			newTNode.totalDistance += tNode.totalDistance + node.weight;
 			
+			// Mark it as done when we found the destination
 			if (node.nodeName == destination) {
 				newTNode.isDone = true;
 			}
@@ -148,19 +166,53 @@ public class PathFinding : MonoBehaviour
 
 	private string GetLongestPath (string start, string destination)
 	{
-		throw new System.NotImplementedException ();
+		// Do this calculate so that we get the tNode
+		GetShortestPath ( start, destination );
+		
+		return CalculateLongestPath ( tNodes );
+	}
+
+	private string CalculateLongestPath (List<TravelingNode> tNodes)
+	{
+		float maxValue = 0.0F;
+		TravelingNode choosenNode = null;
+		
+		foreach ( TravelingNode node in tNodes )
+		{
+			if ( node.totalDistance > maxValue )
+			{
+				maxValue = node.totalDistance;
+				choosenNode = node;
+			}
+		}
+		
+		return choosenNode.path;
 	}
 	
 	private void Start ()
 	{
-		Debug.Log (GetShortestPath ("A", "B"));
+		Debug.Log (GetShortestPath ("H", "E"));
 		Debug.Log (GetLongestPath ("A", "B"));
 	}
-
+	
+	private string txtStart = "A";
+	private string txtDesti = "B";
+	private string shortestPAnswer = string.Empty;
+	private string longestpAnswer = string.Empty;
 	private void OnGUI ()
 	{
 		GUILayout.BeginArea (new Rect (Screen.width * 0.5F, Screen.height * 0.5F, 500, 500));
-		//GUILayout.Label(GetShortestPath("A", "B"));
+		GUILayout.Label ( "Start" );
+		txtStart = GUILayout.TextField ( txtStart, 1 );
+		GUILayout.Label ( "Destination" );
+		txtDesti = GUILayout.TextField ( txtDesti, 1 );
+		if ( GUILayout.Button ( "Calculate" ) )
+		{
+			shortestPAnswer = GetShortestPath ( txtStart, txtDesti );
+			longestpAnswer = GetLongestPath ( txtStart, txtDesti );
+		}
+		GUILayout.Label ( "Shortest path will be "+ shortestPAnswer );
+		GUILayout.Label ( "Longest path will be " + longestpAnswer );
 		GUILayout.EndArea ();
 	}
 }
