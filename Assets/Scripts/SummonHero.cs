@@ -17,6 +17,7 @@ public class SummonHero : MonoBehaviour
 	
 	private void Awake()
 	{
+		// Insert available hero first
 		availableHeroes.Add ( "hulk" );
 		availableHeroes.Add ( "superman" );
 		availableHeroes.Add ( "batman" );
@@ -25,6 +26,7 @@ public class SummonHero : MonoBehaviour
 		availableHeroes.Add ( "antman" );
 		availableHeroes.Add ( "daredevil" );
 		
+		// Insert data for the key map
 		keyMap.Add ( '2', "abc" );
 		keyMap.Add ( '3', "def" );
 		keyMap.Add ( '4', "ghi" );
@@ -35,15 +37,15 @@ public class SummonHero : MonoBehaviour
 		keyMap.Add ( '9', "wxyz" );
 	}
 	
-	private void Start()
-	{
-		Debug.Log ( SummoningHero ( "4855" ) );
-		Debug.Log ( SummoningHero ( "84464" ) );
-		Debug.Log ( SummoningHero ( "234234234" ) );
-	}
+	/// <summary>
+	/// The summon code.
+	/// </summary>
+	private string summonCode = string.Empty;
 	
-	string summonCode = string.Empty;
-	string answer = string.Empty;
+	/// <summary>
+	/// The answer.
+	/// </summary>
+	private string answer = string.Empty;
 	
 	private void OnGUI ()
 	{
@@ -51,9 +53,21 @@ public class SummonHero : MonoBehaviour
 		summonCode = GUILayout.TextField ( summonCode, 10 );
 		if ( GUILayout.Button ( "Summoning ... " ) )
 		{
-			answer = SummoningHero ( summonCode );
+			try
+			{
+				answer = SummoningHero ( summonCode );
+			}
+			catch ( System.Exception e )
+			{
+				answer = "Error occured, please check your input again.";
+			}
 		}
 		GUILayout.Label ( answer );
+		
+		if ( GUILayout.Button ( "Back to front page" ) )
+		{
+			Application.LoadLevel ( "FrontPage" );
+		}
 		GUILayout.EndArea ();
 	}
 
@@ -69,20 +83,12 @@ public class SummonHero : MonoBehaviour
 
 	public List<string> FilterHeroes (string phoneNumbers, List<string> potentialHeroes)
 	{
-		List<string> markedHeroes = new List<string>();
+		List<string> heroClones = new List<string>( potentialHeroes );
 		
 		// Filter out the impossible hero first based on length
-		foreach ( string hero in potentialHeroes )
+		foreach ( string hero in heroClones )
 		{
 			if ( hero.Length != phoneNumbers.Length )
-			{
-				markedHeroes.Add ( hero );
-			}
-		}
-		
-		foreach ( string hero in markedHeroes )
-		{
-			if ( potentialHeroes.Contains ( hero ) )
 			{
 				potentialHeroes.Remove ( hero );
 			}
@@ -90,7 +96,16 @@ public class SummonHero : MonoBehaviour
 		
 		return potentialHeroes;
 	}
-
+	
+	/// <summary>
+	/// Summonings the hero.
+	/// </summary>
+	/// <returns>
+	/// The hero.
+	/// </returns>
+	/// <param name='phoneNumbers'>
+	/// Phone numbers.
+	/// </param>
 	private string SummoningHero (string phoneNumbers)
 	{
 		List<string> potentialHeroes = new List<string> ( availableHeroes );
@@ -119,12 +134,27 @@ public class SummonHero : MonoBehaviour
 		
 		return heroName;
 	}
-
+	
+	/// <summary>
+	/// Gets the potential heroes.
+	/// </summary>
+	/// <returns>
+	/// The potential heroes.
+	/// </returns>
+	/// <param name='phoneNumber'>
+	/// Phone number.
+	/// </param>
+	/// <param name='characterLoc'>
+	/// Character location.
+	/// </param>
+	/// <param name='potentialHeroes'>
+	/// Potential heroes.
+	/// </param>
 	private List<string> GetPotentialHeroes (char phoneNumber, int characterLoc, List<string> potentialHeroes)
 	{
-		List<string> markedHeroes = new List<string>();
+		List<string> heroClones = new List<string>( potentialHeroes );
 		
-		foreach ( string hero in potentialHeroes )
+		foreach ( string hero in heroClones )
 		{
 			if ( keyMap [ phoneNumber ].Contains ( hero [ characterLoc ].ToString() ) )
 			{
@@ -132,14 +162,8 @@ public class SummonHero : MonoBehaviour
 			}
 			else
 			{
-				markedHeroes.Add ( hero );
+				potentialHeroes.Remove ( hero );
 			}
-		}
-		
-		foreach ( string hero in markedHeroes )
-		{
-			if (potentialHeroes.Contains ( hero ) )
-				potentialHeroes.Remove( hero );
 		}
 		
 		return potentialHeroes;

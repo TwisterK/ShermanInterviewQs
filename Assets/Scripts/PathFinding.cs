@@ -4,8 +4,14 @@ using System.Collections.Generic;
 
 public class PathFinding : MonoBehaviour
 {
+	/// <summary>
+	/// The data for the graph
+	/// </summary>
 	Dictionary<string, List<Node>> data;
 
+	/// <summary>
+	/// Awake this instance.
+	/// </summary>
 	private void Awake ()
 	{
 		// Key in the example data in the first place
@@ -19,10 +25,26 @@ public class PathFinding : MonoBehaviour
 		data.Add ("G", Node.InitList ("C,5.5;H,2;F,4"));
 		data.Add ("H", Node.InitList ("G,2;C,6"));
 	}
-
+	
+	/// <summary>
+	/// The travelling nodes.
+	/// </summary>
 	List<TravelingNode> tNodes = new List<TravelingNode> ();
+	
+	/// <summary>
+	/// The traveled nodes.
+	/// </summary>
 	List<string> traveledNodes = new List<string> ();
-
+	
+	/// <summary>
+	/// Creates the travel node.
+	/// </summary>
+	/// <param name='start'>
+	/// Start.
+	/// </param>
+	/// <param name='destination'>
+	/// Destination.
+	/// </param>
 	private void CreateTravelNode (string start, string destination)
 	{
 		// Get start point connected nodes first
@@ -34,18 +56,21 @@ public class PathFinding : MonoBehaviour
 			traveledNodes.Add (start);
 		
 		foreach (Node node in nodes) {
+			// Since we already go through the node, ignore it to save performance
 			if (traveledNodes.Contains (node.nodeName)) {
 				continue;
 			}
 			
 			TravelingNode tNode = TravelingNode.Init (node.nodeName);
 			tNode.path = start + node.nodeName;
-			tNode.interation = 1;
+			tNode.iteration = 1;
 			tNode.totalDistance += node.weight;
 			
+			// Marked it as done if we already reach destination
 			if ( node.nodeName == destination  )
 				tNode.isDone = true;
 			
+			// Add in the list to do another interaction
 			tNodes.Add (tNode);
 		}
 	}
@@ -101,7 +126,7 @@ public class PathFinding : MonoBehaviour
 
 			TravelingNode newTNode = TravelingNode.Init (node.nodeName);
 			newTNode.path = tNode.path + node.nodeName;
-			newTNode.interation = tNode.interation + 1;
+			newTNode.iteration = tNode.iteration + 1;
 			newTNode.totalDistance += tNode.totalDistance + node.weight;
 			
 			// Mark it as done when we found the destination
@@ -143,27 +168,51 @@ public class PathFinding : MonoBehaviour
 				}
 			}
 			
+			// Include equal distance as well because we need to check the iteraction as well
+			// We favor those path with less iteration
 			if (tNode.totalDistance <= distanceValue) {
 				if (tNode.totalDistance < distanceValue) {
 					distanceValue = tNode.totalDistance;
 					chooseNode = tNode;
 				} else if (tNode.totalDistance == distanceValue) {
-					if (chooseNode.interation > tNode.interation) {
+					if (chooseNode.iteration > tNode.iteration) {
 						chooseNode = tNode;
-					} else {
-						chooseNode = tNode;
-					}
+					} 
 				}
 			}
 		}
 		return chooseNode;
 	}
-
+	
+	/// <summary>
+	/// Gets the short distance node.
+	/// </summary>
+	/// <returns>
+	/// The short distance node.
+	/// </returns>
+	/// <param name='tNodes'>
+	/// T nodes.
+	/// </param>
+	/// <param name='includeDoneAsWell'>
+	/// Include done as well.
+	/// </param>
 	private TravelingNode GetShortDistanceNode (List<TravelingNode> tNodes, bool includeDoneAsWell = false)
 	{
 		return GetDistanceNode (tNodes, includeDoneAsWell);
 	}
-
+	
+	/// <summary>
+	/// Gets the longest path.
+	/// </summary>
+	/// <returns>
+	/// The longest path.
+	/// </returns>
+	/// <param name='start'>
+	/// Start.
+	/// </param>
+	/// <param name='destination'>
+	/// Destination.
+	/// </param>
 	private string GetLongestPath (string start, string destination)
 	{
 		// Do this calculate so that we get the tNode
@@ -171,7 +220,16 @@ public class PathFinding : MonoBehaviour
 		
 		return CalculateLongestPath ( tNodes );
 	}
-
+	
+	/// <summary>
+	/// Calculates the longest path.
+	/// </summary>
+	/// <returns>
+	/// The longest path.
+	/// </returns>
+	/// <param name='tNodes'>
+	/// T nodes.
+	/// </param>
 	private string CalculateLongestPath (List<TravelingNode> tNodes)
 	{
 		float maxValue = 0.0F;
@@ -189,6 +247,9 @@ public class PathFinding : MonoBehaviour
 		return choosenNode.path;
 	}
 	
+	/// <summary>
+	/// Start this instance.
+	/// </summary>
 	private void Start ()
 	{
 		Debug.Log (GetShortestPath ("H", "E"));
@@ -208,11 +269,27 @@ public class PathFinding : MonoBehaviour
 		txtDesti = GUILayout.TextField ( txtDesti, 1 );
 		if ( GUILayout.Button ( "Calculate" ) )
 		{
-			shortestPAnswer = GetShortestPath ( txtStart, txtDesti );
-			longestpAnswer = GetLongestPath ( txtStart, txtDesti );
+			try
+			{
+				shortestPAnswer = GetShortestPath ( txtStart, txtDesti );
+				
+				// TODO : Not the right way to calculate the long path, it should return all vertices to travel to B
+				longestpAnswer = GetLongestPath ( txtStart, txtDesti );
+				
+			}
+			catch ( System.Exception e )
+			{
+				shortestPAnswer = longestpAnswer = "Error occured, please check your input again.";
+			}
 		}
 		GUILayout.Label ( "Shortest path will be "+ shortestPAnswer );
 		GUILayout.Label ( "Longest path will be " + longestpAnswer );
+		
+		if ( GUILayout.Button ( "Back to front page" ) )
+		{
+			Application.LoadLevel ( "FrontPage" );
+		}
+		
 		GUILayout.EndArea ();
 	}
 }
@@ -220,7 +297,14 @@ public class PathFinding : MonoBehaviour
 [System.Serializable]
 public class Node
 {
+	/// <summary>
+	/// The name of the node.
+	/// </summary>
 	public string nodeName;
+	
+	/// <summary>
+	/// The weight.
+	/// </summary>
 	public float weight = 0.0F;
 
 	static public Node Init (string nodeName, float weight)
@@ -231,7 +315,17 @@ public class Node
 
 		return node;
 	}
-
+	
+	/// <summary>
+	/// Inits the list.
+	/// A helper function to help init the list easier
+	/// </summary>
+	/// <returns>
+	/// The list.
+	/// </returns>
+	/// <param name='rawData'>
+	/// Raw data.
+	/// </param>
 	static public List<Node> InitList (string rawData)
 	{
 		string[] processData = rawData.Split (';');
@@ -244,32 +338,52 @@ public class Node
 
 		return nodeList;
 	}
-
-	public Node Clone ()
-	{
-		Node newNode = new Node ();
-		newNode.nodeName = this.nodeName;
-		newNode.weight = this.weight;
-
-		return newNode;
-	}
 }
 
 [System.Serializable]
+
+/// <summary>
+/// Traveling node.
+/// </summary>
 public class TravelingNode
 {
+	/// <summary>
+	/// Record the path that this node traveled
+	/// </summary>
 	public string path;
+	
+	/// <summary>
+	/// The current node.
+	/// </summary>
 	public string currentNode;
+	
+	/// <summary>
+	/// The total distance that it has traveled
+	/// </summary>
 	public float totalDistance;
-	public int interation;
+	
+	/// <summary>
+	/// The iteration.
+	/// </summary>
+	public int iteration;
+	
+	/// <summary>
+	/// The is done.
+	/// </summary>
 	public bool isDone = false;
-
+	
+	/// <summary>
+	/// Init the specified currentNode.
+	/// </summary>
+	/// <param name='currentNode'>
+	/// Current node.
+	/// </param>
 	static public TravelingNode Init (string currentNode)
 	{
 		TravelingNode node = new TravelingNode ();
 		node.currentNode = currentNode;
 		node.totalDistance = 0.0F;
-		node.interation = 0;
+		node.iteration = 0;
 
 		return node;
 	}

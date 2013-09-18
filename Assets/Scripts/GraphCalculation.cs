@@ -8,6 +8,12 @@ public class GraphCalculation : MonoBehaviour
 	private string txtDesti = "5";
 	private string answer = string.Empty;
 	
+	/// <summary>
+	/// Gets the ratio.
+	/// </summary>
+	/// <returns>
+	/// The ratio.
+	/// </returns>
 	private float GetRatio()
 	{
 		if ( ratio == 0.0F )
@@ -19,15 +25,6 @@ public class GraphCalculation : MonoBehaviour
 		return ratio;
 	}
 	
-	private void Start()
-	{
-		Debug.Log ( GetAnswer ( 3F, 5F ) );
-		Debug.Log ( GetAnswer ( 3F, 4F ) );
-		Debug.Log ( GetAnswer ( 6F, 1F ) );
-		Debug.Log ( GetAnswer ( 3F, 4F ) );
-		Debug.Log ( GetAnswer ( 2F, 7F ) );
-	}
-	
 	private void OnGUI ()
 	{
 		GUILayout.BeginArea (new Rect (Screen.width * 0.5F, Screen.height * 0.5F, 500, 500));
@@ -37,9 +34,22 @@ public class GraphCalculation : MonoBehaviour
 		txtDesti = GUILayout.TextField ( txtDesti, 1 );
 		if ( GUILayout.Button ( "Calculate" ) )
 		{
-			answer = GetAnswer ( float.Parse ( txtStart ), float.Parse ( txtDesti ) );
+			try
+			{
+				answer = GetAnswer ( float.Parse ( txtStart ), float.Parse ( txtDesti ) );
+			}
+			catch ( System.Exception e )
+			{
+				answer = "Error occured, please check your input again.";
+			}
 		}
 		GUILayout.Label ( answer );
+		
+		if ( GUILayout.Button ( "Back to front page" ) )
+		{
+			Application.LoadLevel ( "FrontPage" );
+		}
+		
 		GUILayout.EndArea ();
 	}
 
