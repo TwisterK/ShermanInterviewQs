@@ -3,44 +3,24 @@ using System.Collections;
 
 public class GraphCalculation : MonoBehaviour 
 {
-	private float ratio;
-	private string txtStart = "3";
-	private string txtDesti = "5";
-	private string answer = string.Empty;
-	
-	/// <summary>
-	/// Gets the ratio.
-	/// </summary>
-	/// <returns>
-	/// The ratio.
-	/// </returns>
-	private float GetRatio()
-	{
-		if ( ratio == 0.0F )
-		{
-			float result = Mathf.Sqrt ( Mathf.Pow ( 3F, 2F ) + Mathf.Pow ( 5F, 2F ) );
-			ratio = 29F / result;
-		}
-		
-		return ratio;
-	}
+	private const int BASE_NUMBER = 8;
+	private string position = "3,2";
+	private string answer = "Please enter position with this format : X,Y";
 	
 	private void OnGUI ()
 	{
-		GUILayout.BeginArea (new Rect (Screen.width * 0.5F, Screen.height * 0.5F, 500, 500));
-		GUILayout.Label ( "X" );
-		txtStart = GUILayout.TextField ( txtStart, 1 );
-		GUILayout.Label ( "Y" );
-		txtDesti = GUILayout.TextField ( txtDesti, 1 );
+		GUILayout.BeginArea (new Rect (Screen.width * 0.5F, Screen.height * 0.5F, 500F, 500F));
+		GUILayout.Label ( "Point : " );
+		position = GUILayout.TextField ( position, 3 );
 		if ( GUILayout.Button ( "Calculate" ) )
 		{
 			try
 			{
-				answer = GetAnswer ( float.Parse ( txtStart ), float.Parse ( txtDesti ) );
+				answer = GetAnswer ( position ).ToString();
 			}
 			catch ( System.Exception e )
 			{
-				answer = "Error occured, please check your input again.";
+				answer = "Error occured, please check your input again.\nPlease enter position with this format : X,Y";
 			}
 		}
 		GUILayout.Label ( answer );
@@ -52,9 +32,30 @@ public class GraphCalculation : MonoBehaviour
 		
 		GUILayout.EndArea ();
 	}
-
-	private string GetAnswer (float par1, float par2)
+	
+	/// <summary>
+	/// Gets the answer.
+	/// </summary>
+	/// <returns>
+	/// The answer.
+	/// </returns>
+	/// <param name='position'>
+	/// Position.
+	/// </param>
+	private int GetAnswer ( string position )
 	{
-		return "Answer for (" + par1 + "," + par2 + ") is " + Mathf.Sqrt ( Mathf.Pow ( par1, 2F ) + Mathf.Pow ( par2, 2F ) ) * GetRatio ();
+		// split the data then process it
+		string [] pos = position.Split ( ',' );
+		
+		// Get the second number and process it
+		int baseNumber = int.Parse ( pos [ 1 ] );
+		int totalNumber = 0;
+		
+		// Do a simple calculation by adding two number together depend on the base number
+		// For example, if we look for position 5,6
+		// It will calculate as total number  = (8x6) + 5 = 53
+		totalNumber = BASE_NUMBER * baseNumber + int.Parse ( pos [ 0 ] );
+		
+		return totalNumber;
 	}
 }
